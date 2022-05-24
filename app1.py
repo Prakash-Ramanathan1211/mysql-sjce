@@ -23,9 +23,17 @@ studentRecord = """CREATE TABLE parking (
                    nod INT NOT NULL,
                    payment VARCHAR(50)
                    )"""
+
+vehicleRecord = """CREATE TABLE vehicle (
+                   pid INT NOT NULL,
+                   vnm VARCHAR(50),
+                 
+                   dateofpur VARCHAR(50)
+                  
+                   )"""
   
 # table created
-cursorObject.execute(studentRecord)
+cursorObject.execute(vehicleRecord)
 
 # sql = "INSERT INTO STUDENT (NAME, BRANCH, ROLL, SECTION, AGE)\
 # VALUES (%s, %s, %s, %s, %s)"

@@ -2,6 +2,10 @@ import os
 import platform
 import mysql.connector
 
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
 mydb=mysql.connector.connect(
     host ="localhost",
     user ="prakash",
@@ -10,6 +14,160 @@ mydb=mysql.connector.connect(
 )
 
 mycursor=mydb.cursor()
+
+@app.route("/")
+def startpy():
+
+    menu()
+
+    return render_template("index.html")
+
+@app.route("/add/parking/details", methods=["GET"])
+def add_parking_details():
+
+    return render_template("add_parking_details.html")
+
+@app.route("/add/parking/details", methods=["POST"])
+def add_parking_details_post():
+    parking_list = []
+    parking_number = request.values.get('parking_number')
+    parking_list.append(parking_number)
+
+    parking_name   = request.values.get('parking_name')
+    parking_list.append(parking_name)
+
+    parking_level  = request.values.get('parking_level')
+    parking_list.append(parking_level)
+
+    free_space     = request.values.get('free_space')
+    parking_list.append(free_space)
+
+    vehicle_number = request.values.get('vehicle_number')
+    parking_list.append(vehicle_number)
+
+    parking_days   = request.values.get('parking_days')
+    parking_list.append(parking_days)
+
+    payment = int(parking_days) * 20
+    parking_list.append(payment)
+
+    stud=(parking_list)
+
+    sql='insert into parking(pid,pnm,level,freespace,vehicleno,nod,payment) values(%s,%s,%s,%s,%s,%s,%s)'
+    mycursor.execute(sql,stud)
+    mydb.commit()
+
+    res = "successfully inserted parking details"
+
+    return render_template("success.html", result = res)
+
+@app.route("/view/parking/details", methods=["GET"])
+def view_parking_details():
+
+    parking_number = request.values.get('parking_number')
+    parking_name = request.values.get('parking_name')  
+    level_no = request.values.get('level_no')    
+
+    if parking_number:
+        s = parking_number
+        rl=(s,)
+        sql="select * from parking where pid=%s"
+        mycursor.execute(sql,rl)
+        res=mycursor.fetchall()
+    
+    elif parking_name:
+        s = parking_number
+        rl=(s,)
+        sql="select * from parking where pnm=%s"
+        mycursor.execute(sql,rl)
+        res=mycursor.fetchall()
+    
+    elif level_no:
+        s = level_no
+        rl=(s,)
+        sql="select * from parking where level=%s"
+        mycursor.execute(sql,rl)
+        res=mycursor.fetchall()
+    
+    else:
+        sql="select * from parking"
+        mycursor.execute(sql)
+        res=mycursor.fetchall()
+    
+    # return res
+
+    return render_template("parking_details.html", result = res)
+    # for x in res:
+    #     print(x)
+
+
+
+@app.route("/add/vehicle/detail", methods=["GET"])
+def add_vehicle_details():
+
+    return render_template("add_vehicle_details.html")
+
+@app.route("/add/vehicle/detail", methods=["POST"])
+def add_vehicle_details_post():
+    vehicle_detail_list = []
+
+    vehicle_no = request.values.get('vehicle_no')
+    vehicle_detail_list.append(vehicle_no)
+
+    vehicle_name = request.values.get('vehicle_name')
+    vehicle_detail_list.append(vehicle_name)
+
+    date_of_purchase = request.values.get("date_of_purchase")
+    vehicle_detail_list.append(date_of_purchase)
+
+    vdt=(vehicle_detail_list)
+    sql="insert into vehicle(pid,vnm,dateofpur) values(%s,%s,%s)"
+    mycursor.execute(sql,vdt)
+    mydb.commit()
+
+    res = "successfully added vehicle detail"
+
+    return render_template("success.html", result = res)
+
+@app.route("/view/vehicle/details", methods=["GET"])
+def view_vehicle_details():
+
+    vehicle_no = request.values.get("vehicle_no")
+    sql='select parking.pid,parking.pnm,parking.vehicleno,vehicle.pid,vehicle.vnm from parking INNER JOIN vehicle ON parking.pid=vehicle.pid and vehicle.pid=%s'
+    rl=(vehicle_no,)
+    mycursor.execute(sql,rl)
+    res=mycursor.fetchall()
+
+    # return res 
+
+    return render_template("vehicle_details.html", result = res)
+
+@app.route("/remove/vehicle/details", methods=["GET"])
+def remove_vehicle_details():
+
+    return render_template("remove_vehicle_details.html")
+
+@app.route("/remove/vehicle/details", methods=["POST"])
+def remove_vehicle_details_post():
+
+    vehicle_no = request.values.get("vehicle_no")
+    rl=(vehicle_no,)
+    sql="Delete from vehicle where pid=%s"
+    mycursor.execute(sql,rl)
+    mydb.commit()
+
+    res = "successfully removed vehicle detail"
+    return render_template("success.html", result = res)
+   
+
+
+def remove():
+    vid1=int(input("Enter the vehicle number of the vehicle to be deleted : "))
+    rl=(vid1,)
+    sql="Delete from vehicle where pid=%s"
+    mycursor.execute(sql,rl)
+    mydb.commit()
+    print('Removed as per the command')
 
 def add_record():
     L=[]
@@ -105,7 +263,7 @@ def vehicle_detail():
     sql="insert into vehicle(pid,vnm,dateofpur) values(%s,%s,%s)"
     mycursor.execute(sql,vdt)
     mydb.commit()
-    
+
 def vehicle_view():
     vid1=int(input("Enter the vehicle number of the vehicle whose details is to be viewed : "))
     sql='select parking.pid,parking.pnm,parking.vehicleno,vehicle.pid,vehicle.vnm from parking INNER JOIN vehicle ON parking.pid=vehicle.pid and vehicle.pid=%s'
@@ -117,14 +275,6 @@ def vehicle_view():
     for x in res:
         print(x)
     print('Task compelted')
-
-def remove():
-    vid1=int(input("Enter the vehicle number of the vehicle to be deleted : "))
-    rl=(vid1,)
-    sql="Delete from vehicle where pid=%s"
-    mycursor.execute(sql,rl)
-    mydb.commit()
-    print('Removed as per the command')
 
 def menu():
     print("Enter 1 : To Add Parking Detail")
@@ -139,12 +289,16 @@ def menu():
 
     elif (input_dt==2):
         rec_view()
+
     elif (input_dt==3):
         vehicle_detail()
+
     elif (input_dt==4):
         remove()
+
     elif (input_dt==5):
         vehicle_view()
+        
     else:
         print("Enter correct choice....")
         menu()
@@ -159,4 +313,7 @@ def runAgain():
     menu()
     runAgn=input('\nwant to run Again Y/n:') 
 
-runAgain()
+# runAgain()
+
+if __name__ == "__main__":
+    app.run(debug=True)
